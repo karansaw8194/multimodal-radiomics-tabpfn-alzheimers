@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Virtual environments
+.venv/
+.venv311/
+venv/
+
+# Raw ADNI data — NEVER commit
+raw/
+*.nii
+*.nii.gz
+*.xml
+
+# Private/derived clinical data
+clinical_features.csv
+manifest.csv
+*manifest*.csv
+
+# Derived data
+data/derived/
+
+# Local reports / experiments
+reports/
+experiments/
+
+# Local configuration
+.env
+*.local.toml
+*.local.yaml
+*.local.yml
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/

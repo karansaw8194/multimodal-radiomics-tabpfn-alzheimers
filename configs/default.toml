@@ -1,0 +1,101 @@
+[project]
+name = "alzheimer_modal"
+random_seed = 42
+target_column = "diagnosis"
+subject_id_column = "subject_id"
+
+[paths]
+dataset_root = ""
+manifest_dir = "reports/data_audit"
+derived_dir = "data/derived"
+experiment_dir = "experiments"
+log_dir = "logs"
+
+[dataset]
+classes = ["CN", "MCI", "AD"]
+allowed_nifti_extensions = [".nii", ".nii.gz"]
+allowed_xml_extensions = [".xml"]
+
+# The audit records every processing version. Later stages can select one
+# version per acquisition. An empty value means that selection is not yet made.
+selected_processing_version = ""
+
+# Valid values:
+#   error       Stop when an acquisition has multiple candidate files.
+#   first       Select the first deterministic candidate.
+#   configured  Use selected_processing_version.
+processing_version_policy = "error"
+
+[split]
+strategy = "group_stratified"
+train_size = 0.70
+validation_size = 0.15
+test_size = 0.15
+random_seed = 42
+group_column = "subject_id"
+
+[preprocessing]
+target_spacing_mm = [1.0, 1.0, 1.0]
+orientation = "RAS"
+normalization = "zscore_nonzero"
+save_intermediate_outputs = true
+
+[segmentation]
+backend = "placeholder"
+model_name = ""
+model_weights = ""
+require_ground_truth_for_metrics = true
+
+[radiomics]
+enabled = true
+settings_file = ""
+bin_width = 25.0
+include_shape_features = true
+include_first_order_features = true
+include_texture_features = true
+
+[clinical]
+enabled = true
+fields = [
+    "age",
+    "sex",
+    "apoe_a1",
+    "apoe_a2",
+    "mmse",
+    "gds",
+    "cdr",
+    "weight",
+    "visit",
+    "study_id",
+    "series_id",
+    "image_id"
+]
+missing_value_policy = "preserve_missing"
+
+[feature_selection]
+baseline_enabled = true
+gwo_enabled = true
+hho_enabled = true
+fitness_metric = "balanced_accuracy"
+population_size = 20
+iterations = 30
+random_seed = 42
+
+[tabpfn]
+enabled = true
+device = "auto"
+random_seed = 42
+
+[explainability]
+shap_enabled = true
+counterfactual_enabled = true
+max_background_samples = 100
+max_explanation_samples = 100
+
+[evaluation]
+confidence_level = 0.95
+bootstrap_iterations = 1000
+save_predictions = true
+save_probabilities = true
+save_metrics = true
+save_plots = true
