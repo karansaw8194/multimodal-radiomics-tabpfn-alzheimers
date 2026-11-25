@@ -10,11 +10,9 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import GroupKFold
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from tabpfn import TabPFNClassifier
 
 META_COLUMNS = {
     "subject_id",
@@ -155,28 +153,18 @@ def choose_cv_folds(
 
     return folds
 
-def make_model() -> Pipeline:
+def make_fitness_model(
+    device: str = "cpu",
+    n_estimators: int = 1,
+) -> TabPFNClassifier:
     """
-    Create the GWO fitness model.
-    StandardScaler is fitted separately inside every grouped CV training
-    fold. LogisticRegression automatically handles the multiclass target
-    using the installed scikit-learn API.
+    Create TabPFN classifier for GWO fitness evaluation.
+    Using n_estimators=1 for fast, zero-leakage grouped cross-validation fitness.
     """
-    return Pipeline(
-        steps=[
-            (
-                "scaler",
-                StandardScaler(),
-            ),
-            (
-                "classifier",
-                LogisticRegression(
-                    max_iter=2000,
-                    class_weight="balanced",
-                    random_state=42,
-                ),
-            ),
-        ]
+    return TabPFNClassifier(
+        device=device,
+        n_estimators=n_estimators,
+        show_progress_bar=False,
     )
 
 def evaluate_mask(
@@ -185,13 +173,20 @@ def evaluate_mask(
     groups: np.ndarray,
     mask: np.ndarray,
     cv_folds: int,
-    random_seed: int,
+    random_seed: int = 42,
+    device: str = "cpu",
+    n_estimators: int = 1,
+    cache: dict[tuple[bool, ...], float] | None = None,
 ) -> float:
-    """Evaluate one feature mask using subject-grouped CV."""
+    """Evaluate one feature mask using TabPFN within subject-grouped CV."""
     if mask.sum() == 0:
         return 0.0
 
-    selected_values = feature_values[:, mask]
+    mask_key = tuple(bool(x) for x in mask)
+    if cache is not None and mask_key in cache:
+        return cache[mask_key]
+
+    selected_values = feature_values[:, mask].astype(np.float32)
 
     splitter = GroupKFold(n_splits=cv_folds)
     predictions = np.full(
@@ -200,36 +195,49 @@ def evaluate_mask(
         dtype=int,
     )
 
-    for train_indices, validation_indices in splitter.split(
-        selected_values,
-        target,
-        groups,
-    ):
-        model = make_model()
-        model.set_params(
-            classifier__random_state=random_seed
-        )
+    try:
+        for train_indices, validation_indices in splitter.split(
+            selected_values,
+            target,
+            groups,
+        ):
+            model = make_fitness_model(
+                device=device,
+                n_estimators=n_estimators,
+            )
 
-        model.fit(
-            selected_values[train_indices],
-            target[train_indices],
-        )
+            model.fit(
+                selected_values[train_indices],
+                target[train_indices],
+            )
 
-        predictions[validation_indices] = model.predict(
-            selected_values[validation_indices]
-        )
+            predictions[validation_indices] = model.predict(
+                selected_values[validation_indices]
+            )
+    except Exception:
+        if cache is not None:
+            cache[mask_key] = 0.0
+        return 0.0
 
     valid_predictions = predictions >= 0
 
     if not valid_predictions.all():
-        return 0.0
-
-    return float(
-        balanced_accuracy_score(
-            target,
-            predictions,
+        score = 0.0
+    else:
+        # Balanced accuracy with a small parsimony incentive (0.1% weight on feature ratio)
+        bacc = float(
+            balanced_accuracy_score(
+                target,
+                predictions,
+            )
         )
-    )
+        parsimony_penalty = 0.001 * (mask.sum() / len(mask))
+        score = max(0.0, bacc - parsimony_penalty)
+
+    if cache is not None:
+        cache[mask_key] = score
+
+    return score
 
 def initialize_population(
     population_size: int,
@@ -388,6 +396,7 @@ def run_gwo(
     delta_score = -np.inf
 
     history = []
+    cache: dict[tuple[bool, ...], float] = {}
 
     for iteration in range(iterations):
         scores = []
@@ -400,6 +409,7 @@ def run_gwo(
                 mask=wolf.astype(bool),
                 cv_folds=cv_folds,
                 random_seed=random_seed,
+                cache=cache,
             )
 
             scores.append(score)
@@ -660,7 +670,7 @@ def run_gwo_selection(
         "iterations": iterations,
         "cv_folds": cv_folds,
         "fitness_model": (
-            "StandardScaler plus class-weighted LogisticRegression"
+            "TabPFNClassifier (device=cpu, n_estimators=1)"
         ),
         "fitness_split": "grouped cross-validation within train",
         "group_column": "subject_id",

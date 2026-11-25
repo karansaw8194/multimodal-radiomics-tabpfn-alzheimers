@@ -60,23 +60,34 @@ def identify_subject_id(
     mri_root: Path,
 ) -> Optional[str]:
     """
-    Expected structure:
+    Supported structures:
 
     mri_root/
     └── CLASS/
         └── SUBJECT_ID/
             └── PROCESSING_VERSION/
                 └── ACQUISITION_DATE/
-                    └── IMAGE_DIRECTORY_ID/
-                        └── MRI_FILE
+                        └── IMAGE_DIRECTORY_ID/
+                            └── MRI_FILE
+
+    or the subject-first layout:
+
+    mri_root/
+    └── SUBJECT_ID/
+        └── PROCESSING_VERSION/
+            └── ACQUISITION_DATE/
+                └── IMAGE_DIRECTORY_ID/
+                    └── MRI_FILE
     """
     try:
         relative_parts = nifti_path.relative_to(mri_root).parts
     except ValueError:
         return None
 
-    if len(relative_parts) >= 2:
-        return relative_parts[1]
+    structure_offset = _mri_structure_offset(relative_parts)
+
+    if len(relative_parts) >= structure_offset + 5:
+        return relative_parts[structure_offset]
 
     return None
 
@@ -90,8 +101,10 @@ def identify_processing_version(
     except ValueError:
         return None
 
-    if len(relative_parts) >= 3:
-        return relative_parts[2]
+    structure_offset = _mri_structure_offset(relative_parts)
+
+    if len(relative_parts) >= structure_offset + 5:
+        return relative_parts[structure_offset + 1]
 
     return None
 
@@ -105,8 +118,10 @@ def identify_acquisition_date(
     except ValueError:
         return None
 
-    if len(relative_parts) >= 4:
-        return relative_parts[3]
+    structure_offset = _mri_structure_offset(relative_parts)
+
+    if len(relative_parts) >= structure_offset + 5:
+        return relative_parts[structure_offset + 2]
 
     return None
 
@@ -120,10 +135,20 @@ def identify_image_directory_id(
     except ValueError:
         return None
 
-    if len(relative_parts) >= 5:
-        return relative_parts[4]
+    structure_offset = _mri_structure_offset(relative_parts)
+
+    if len(relative_parts) >= structure_offset + 5:
+        return relative_parts[structure_offset + 3]
 
     return None
+
+
+def _mri_structure_offset(relative_parts: tuple[str, ...]) -> int:
+    """Return the leading class-directory offset for a legacy MRI path."""
+    if relative_parts and relative_parts[0].upper() in KNOWN_CLASSES:
+        return 1
+
+    return 0
 
 def find_class_metadata_directory(
     clinical_root: Path,
@@ -211,21 +236,6 @@ def find_xml_for_nifti(
         root=mri_root,
     )
 
-    if class_name is None:
-        return None, "class_not_found", None
-
-    class_metadata_directory = find_class_metadata_directory(
-        clinical_root=clinical_root,
-        class_name=class_name,
-    )
-
-    if class_metadata_directory is None:
-        return (
-            None,
-            "class_metadata_directory_not_found",
-            class_name,
-        )
-
     subject_id = identify_subject_id(
         nifti_path=nifti_path,
         mri_root=mri_root,
@@ -247,18 +257,47 @@ def find_xml_for_nifti(
     if image_directory_id is None:
         return None, "image_directory_id_not_found", class_name
 
-    all_xml_files = sorted(
-        path
-        for path in class_metadata_directory.rglob("*.xml")
-        if path.is_file()
-    )
+    if class_name is not None:
+        class_metadata_directory = find_class_metadata_directory(
+            clinical_root=clinical_root,
+            class_name=class_name,
+        )
 
-    if not all_xml_files:
-        return None, "no_xml_files_found", class_name
+        if class_metadata_directory is None:
+            return (
+                None,
+                "class_metadata_directory_not_found",
+                class_name,
+            )
+
+        all_xml_files = sorted(
+            path
+            for path in class_metadata_directory.rglob("*.xml")
+            if path.is_file()
+        )
+        complete_xml_files = [
+            path
+            for path in all_xml_files
+            if is_complete_flat_xml(
+                xml_path=path,
+                class_metadata_directory=class_metadata_directory,
+            )
+        ]
+    else:
+        # Subject-first MRI exports store their complete IDAXS XML files
+        # directly in clinical_root; nested XML files are technical summaries.
+        complete_xml_files = sorted(
+            path
+            for path in clinical_root.glob("*.xml")
+            if path.is_file()
+        )
+
+    if not complete_xml_files:
+        return None, "no_complete_xml_files_found", class_name
 
     subject_candidates = [
         xml_path
-        for xml_path in all_xml_files
+        for xml_path in complete_xml_files
         if subject_id.upper() in xml_path.name.upper()
     ]
 
@@ -277,18 +316,6 @@ def find_xml_for_nifti(
             "complete_flat_xml_not_found",
             class_name,
         )
-
-    flat_candidates = [
-        xml_path
-        for xml_path in image_candidates
-        if is_complete_flat_xml(
-            xml_path=xml_path,
-            class_metadata_directory=class_metadata_directory,
-        )
-    ]
-
-    if flat_candidates:
-        image_candidates = flat_candidates
 
     if processing_version is not None:
         processing_candidates = [

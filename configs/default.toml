@@ -75,10 +75,10 @@ missing_value_policy = "preserve_missing"
 [feature_selection]
 baseline_enabled = true
 gwo_enabled = true
-hho_enabled = true
+active_method = "gwo"
 fitness_metric = "balanced_accuracy"
-population_size = 20
-iterations = 30
+population_size = 10
+iterations = 15
 random_seed = 42
 
 [tabpfn]

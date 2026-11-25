@@ -36,6 +36,20 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "--preprocessing-catalog",
+        type=Path,
+        default=PROJECT_ROOT
+        / "data"
+        / "new_dataset_derived"
+        / "preprocessed_subject_splits_v1"
+        / "preprocessing_catalog.csv",
+        help=(
+            "Catalog that maps canonical raw NIfTI paths to acquisition IDs and splits "
+            "when the clinical manifest has no acquisition_group_id column."
+        ),
+    )
+
+    parser.add_argument(
         "--clinical-dir",
         type=Path,
         default=PROJECT_ROOT / "data" / "derived" / "clinical",
@@ -55,6 +69,7 @@ def main() -> None:
     clin_df = process_clinical_manifest(
         manifest_path=args.manifest,
         output_dir=args.clinical_dir.resolve(),
+        preprocessing_catalog_path=args.preprocessing_catalog.resolve(),
     )
 
     print(f"Clinical features extracted for {len(clin_df)} scans.")

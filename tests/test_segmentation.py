@@ -36,3 +36,19 @@ def test_segmentation_metrics() -> None:
     assert metrics.sensitivity == 1.0
     assert metrics.specificity == 1.0
     assert metrics.hd95 == 0.0
+
+
+def test_segmentation_includes_negative_nonzero_voxels() -> None:
+    data = np.zeros((30, 30, 30), dtype=np.float32)
+    z, y, x = np.ogrid[:30, :30, :30]
+    mask = (x - 15) ** 2 + (y - 15) ** 2 + (z - 15) ** 2 <= 100
+
+    # Simulate z-score normalized brain intensities: negative and positive.
+    values = np.linspace(-2.0, 2.0, int(np.sum(mask)), dtype=np.float32)
+    data[mask] = values
+
+    segmented = OtsuMorphologicalBackend().segment(data)
+
+    assert segmented.shape == data.shape
+    assert np.any(segmented[mask] > 0)
+    assert np.all(segmented[~mask] == 0)

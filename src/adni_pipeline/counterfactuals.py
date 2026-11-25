@@ -398,7 +398,19 @@ def infer_discrete_features(
             np.round(unique_values),
         )
 
-        if integer_like and len(unique_values) <= 10:
+        known_discrete_features = {
+            "clin_sex",
+            "clin_apoe_a1",
+            "clin_apoe_a2",
+            "clin_cdr",
+            "clin_gds",
+            "clin_mmse",
+        }
+
+        if (
+            (integer_like and len(unique_values) <= 10)
+            or column in known_discrete_features
+        ):
             discrete_indices.add(index)
 
     return discrete_indices

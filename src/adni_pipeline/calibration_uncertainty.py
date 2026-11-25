@@ -214,3 +214,68 @@ def analyze_prediction_uncertainty(
         json.dump(summary, handle, indent=2)
 
     return summary
+
+
+
+
+# ============================================================
+# PREDICTION UNCERTAINTY & CALIBRATION - PROJECT EXPLANATION
+# ============================================================
+#
+# NAME:
+# Prediction Uncertainty and Calibration Analysis
+#
+# MODEL:
+# No new machine learning model is trained in this stage.
+# Existing model predictions are analyzed.
+#
+# TECHNIQUE:
+# Uncertainty Analysis and Probability Calibration are used
+# to measure prediction uncertainty and reliability.
+#
+# ALGORITHM:
+# Predictive Entropy, ECE, MCE, and Brier Score are calculated.
+#
+# INPUT:
+# Predictions CSV containing target labels, predictions, and
+# CN, MCI, and AD class probabilities.
+#
+# UNCERTAINTY:
+# Predictive entropy measures how uncertain the model is.
+# Higher entropy indicates greater uncertainty.
+#
+# CONFIDENCE:
+# The highest predicted class probability represents model
+# confidence.
+#
+# ECE:
+# Expected Calibration Error measures the difference between
+# predicted confidence and observed accuracy across bins.
+#
+# MCE:
+# Maximum Calibration Error stores the largest calibration gap
+# among the probability bins.
+#
+# BRIER SCORE:
+# Brier Score measures the error between predicted class
+# probabilities and the actual class labels.
+#
+# VISUALIZATION:
+# A reliability diagram compares predicted confidence with
+# observed accuracy.
+#
+# OUTPUT:
+# The augmented CSV contains prediction uncertainty values.
+#
+# RELIABILITY DIAGRAM:
+# The PNG file visualizes the calibration performance.
+#
+# SUMMARY:
+# The calibration summary JSON stores entropy, confidence,
+# ECE, MCE, Brier Score, sample count, and output paths.
+#
+# IMPORTANT:
+# This stage analyzes the existing predictions and does not
+# train another classification model.
+# ============================================================
+

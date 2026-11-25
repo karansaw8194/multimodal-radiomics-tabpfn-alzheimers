@@ -51,6 +51,17 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "--artifact-dir",
+        type=Path,
+        default=(
+            PROJECT_ROOT
+            / "artifacts"
+            / "v2_gwo_tabpfn"
+        ),
+        help="Directory containing the active GWO + TabPFN artifact package.",
+    )
+
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=(
@@ -66,6 +77,7 @@ def main() -> None:
     nifti_path = args.nifti.expanduser().resolve()
     xml_path = args.xml.expanduser().resolve()
     output_dir = args.output_dir.expanduser().resolve()
+    artifact_dir = args.artifact_dir.expanduser().resolve()
 
     if not nifti_path.exists():
         raise FileNotFoundError(
@@ -77,43 +89,24 @@ def main() -> None:
             f"XML file does not exist: {xml_path}"
         )
 
-    experiment_dir = (
-        PROJECT_ROOT
-        / "experiments"
-        / "tabpfn"
-        / f"{args.modality}_baseline"
-    )
-
-    feature_selection_dir = (
-        PROJECT_ROOT
-        / "data"
-        / "derived"
-        / "selected_features"
-        / "baseline"
-    )
-
-    model_inputs_dir = (
-        PROJECT_ROOT
-        / "data"
-        / "derived"
-        / "model_inputs"
-    )
+    if not artifact_dir.exists():
+        raise FileNotFoundError(
+            f"Artifact package directory does not exist: {artifact_dir}"
+        )
 
     print("Starting live inference")
     print(f"NIfTI: {nifti_path}")
     print(f"XML: {xml_path}")
     print(f"Modality: {args.modality}")
-    print(f"Experiment directory: {experiment_dir}")
+    print(f"Artifact directory: {artifact_dir}")
     print(f"Output directory: {output_dir}")
     print()
 
     result = run_live_single_pair_inference(
         nifti_path=nifti_path,
         xml_path=xml_path,
-        experiment_dir=experiment_dir,
-        feature_selection_dir=feature_selection_dir,
-        model_inputs_dir=model_inputs_dir,
         output_dir=output_dir,
+        artifact_pkg_dir=artifact_dir,
         modality=args.modality,
     )
 

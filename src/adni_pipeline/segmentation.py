@@ -108,7 +108,7 @@ class OtsuMorphologicalBackend(BrainSegmentationBackend):
 
     def segment(self, image_data: np.ndarray) -> np.ndarray:
         # Non-zero tissue mask
-        tissue_mask = image_data > 0
+        tissue_mask = image_data != 0
         if not np.any(tissue_mask):
             return np.zeros_like(image_data, dtype=np.int16)
 

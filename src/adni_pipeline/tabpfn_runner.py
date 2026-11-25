@@ -463,3 +463,62 @@ def run_tabpfn_experiment(
         )
 
     return summary
+
+
+# ============================================================
+# TABPFN CLASSIFICATION 
+# ============================================================
+#
+# NAME:
+# TabPFN Classification
+#
+# MODEL:
+# TabPFNClassifier is used to classify the input tabular
+# features into CN, MCI, and AD classes.
+#
+# TECHNIQUE:
+# Tabular Classification is used to predict the diagnosis
+# from the selected clinical and/or radiomics features.
+#
+# ALGORITHM:
+# TabPFN uses the training features and target labels to
+# perform classification and generate class probabilities.
+#
+# CLASSES:
+# CN = 0, MCI = 1, AD = 2.
+#
+# INPUT:
+# Training, validation, and test CSV files containing the
+# selected numerical features and target labels.
+#
+# TRAINING:
+# The TabPFNClassifier is fitted using the training features
+# and training target labels.
+#
+# PREDICTION:
+# The model predicts the diagnosis class and calculates
+# probability for each class.
+#
+# CONFIDENCE:
+# The highest class probability is stored as the prediction
+# confidence.
+#
+# EVALUATION:
+# Validation and test predictions are evaluated using the
+# project's calculate_metrics function.
+#
+# OUTPUT:
+# validation_predictions.csv and test_predictions.csv contain
+# predictions, confidence, and CN/MCI/AD probabilities.
+#
+# SAVED MODEL:
+# model.joblib stores the trained TabPFN model.
+#
+# SUMMARY:
+# experiment_summary.json stores model information, feature
+# count, runtime, validation metrics, and test metrics.
+#
+# IMPORTANT:
+# subject_id, diagnosis_xml, and target_label are metadata and
+# are not used as model features.
+# ============================================================

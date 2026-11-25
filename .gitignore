@@ -1,39 +1,107 @@
-# Python
+# ==========================================
+# 1. Python Cache & Temporary Files
+# ==========================================
 __pycache__/
 *.py[cod]
-.pytest_cache/
+*$py.class
 *.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+Thumbs.db
 
-# Virtual environments
-.venv/
-.venv311/
+# ==========================================
+# 2. Virtual Environments
+# ==========================================
 venv/
+env/
+.venv/
+.venv*/
+.venv311/
+.venv_preprocessing/
+.venv_repair/
 
-# Raw ADNI data — NEVER commit
+# ==========================================
+# 3. Datasets & Raw/Derived Data Files
+# ==========================================
 raw/
+data/
+demo_inputs/
 *.nii
 *.nii.gz
 *.xml
+*.csv
+*.json
+*.tsv
+*.parquet
+*.npy
+*.npz
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tiff
+*.mp4
+*.avi
+*.mov
+*.wav
+*.mp3
+*.flac
 
-# Private/derived clinical data
-clinical_features.csv
-manifest.csv
-*manifest*.csv
+# ==========================================
+# 4. Model Checkpoints, Weights & Artifacts
+# ==========================================
+artifacts/
+*.pth
+*.pt
+*.h5
+*.hdf5
+*.bin
+*.ckpt
+*.safetensors
+*.onnx
+*.joblib
+*.pkl
+*.pickle
 
-# Derived data
-data/derived/
-
-# Local reports / experiments
-reports/
+# ==========================================
+# 5. Logs, Reports & Experiment Tracking
+# ==========================================
+wandb/
+runs/
+logs/
+*.log
 experiments/
+reports/
 
-# Local configuration
+# Generated academic report / paper binaries (uncomment to track)
+report/
+paper_dossier/
+project_report_sections/
+*.pdf
+*.docx
+
+# ==========================================
+# 6. IDE / Editor & Node Modules
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+node_modules/
+
+# ==========================================
+# 7. Secrets, Environment & API Keys
+# ==========================================
 .env
+.env.*
+*.pem
+*.key
 *.local.toml
 *.local.yaml
 *.local.yml
-
-# OS/editor files
-.DS_Store
-.vscode/
-.idea/
+*secret*
+*credentials*

@@ -8,6 +8,7 @@ from typing import Any
 
 import joblib
 import matplotlib
+from sympy import python
 
 matplotlib.use("Agg")
 
@@ -652,3 +653,66 @@ def run_shap_explanation(
         )
 
     return summary
+
+
+# ============================================================
+# SHAP EXPLAINABILITY - PROJECT EXPLANATION
+# ============================================================
+#
+# NAME:
+# SHAP Explainability
+#
+# MODEL:
+# SHAP is used to explain the contribution of input features
+# to the model predictions.
+#
+# TECHNIQUE:
+# Explainable AI (XAI) is used to understand which features
+# influence the model's predictions.
+#
+# ALGORITHM:
+# SHAP calculates a contribution value for each feature for
+# the model output.
+#
+# CLASSES:
+# CN = 0, MCI = 1, AD = 2.
+#
+# INPUT:
+# Trained classification model, training background features,
+# and test/explanation features.
+#
+# PREDICTION:
+# The loaded model uses predict_proba() to generate class
+# probabilities for CN, MCI, and AD.
+#
+# GLOBAL EXPLANATION:
+# Mean absolute SHAP values are calculated to identify the
+# overall importance of each feature.
+#
+# SAMPLE EXPLANATION:
+# SHAP values are calculated for individual test samples to
+# show the contribution of each feature.
+#
+# OUTPUT:
+# global_shap_importance.csv stores overall and class-wise
+# feature importance.
+#
+# global_shap_importance.png visualizes the top global features.
+#
+# sample_shap_values.csv stores feature-level SHAP values for
+# individual samples.
+#
+# shap_values.npy stores the normalized SHAP values.
+#
+# explanation_predictions.csv stores predictions, confidence,
+# and CN/MCI/AD probabilities.
+#
+# SUMMARY:
+# shap_summary.json stores SHAP configuration, sample counts,
+# feature count, runtime, and leakage information.
+#
+# IMPORTANT:
+# subject_id and target_label are not used as model features.
+# ============================================================
+
+

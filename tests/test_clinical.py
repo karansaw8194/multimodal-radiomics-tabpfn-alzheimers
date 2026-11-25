@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 from adni_pipeline.clinical_processor import (
     DIAGNOSIS_LABEL_MAP,
+    attach_acquisition_metadata,
     parse_numeric,
     parse_sex_binary,
     process_clinical_manifest,
@@ -42,3 +43,28 @@ def test_process_clinical_manifest(tmp_path: Path) -> None:
     assert df.loc[1, "target_label"] == 2  # AD
     assert df.loc[0, "clin_sex"] == 0.0
     assert df.loc[1, "clin_sex"] == 1.0
+
+
+def test_attach_acquisition_metadata_uses_canonical_nifti_path(tmp_path: Path) -> None:
+    manifest = pd.DataFrame(
+        {
+            "subject_id": ["S001", "S002"],
+            "diagnosis_xml": ["CN", "AD"],
+            "nifti_path": ["/raw/second.nii", "/raw/first.nii"],
+        }
+    )
+    catalog_path = tmp_path / "preprocessing_catalog.csv"
+    pd.DataFrame(
+        {
+            "subject_id": ["S002", "S001"],
+            "diagnosis_xml": ["AD", "CN"],
+            "raw_nifti_path": ["/raw/first.nii", "/raw/second.nii"],
+            "acquisition_group_id": ["group_0001", "group_0002"],
+            "split": ["train", "test"],
+        }
+    ).to_csv(catalog_path, index=False)
+
+    aligned = attach_acquisition_metadata(manifest, catalog_path)
+
+    assert aligned["acquisition_group_id"].tolist() == ["group_0002", "group_0001"]
+    assert aligned["split"].tolist() == ["test", "train"]
